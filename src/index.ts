@@ -1,17 +1,19 @@
-import fastify from 'fastify'
+import Fastify from 'fastify';
 
-const port = 8080
+// @ts-ignore
+import { websocketsRoutes } from './routes.ts';
 
-const server = fastify()
+const port = 8080;
 
-server.get('/s', async (request, reply) => {
-  return 'pong\n'
-})
+export const fastify = Fastify({});
 
-server.listen({ port }, (err, address) => {
+fastify.register(websocketsRoutes, { prefix: 'api' });
+
+fastify.listen({ port }, (err, address) => {
   if (err) {
-    console.error(err)
-    process.exit(1)
+    console.error(err);
+    process.exit(1);
   }
-  console.log(`Server listening at ${address}`)
-})
+
+  console.log(`Server listening at ${address}`);
+});
