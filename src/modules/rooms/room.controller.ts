@@ -1,22 +1,29 @@
 import { SocketStream } from '@fastify/websocket';
 import { FastifyRequest } from 'fastify';
 // @ts-ignore
-import { broadcast } from '../../index.ts';
-// @ts-ignore
 import { Room, roomsList } from './data/roomsList.ts';
 
-interface Connection {
+type ConnectionsList = Map<number, SocketStream>
 
+interface Connection {
+  connections: ConnectionsList;
 }
 
-const rooms = new Map();
+const broadcast = <T>(cn: ConnectionsList | undefined, message: T): void => {
+  if (!cn) return;
+  cn.forEach((ws) => {
+    ws.socket.send(JSON.stringify(message));
+  });
+};
+
+const rooms = new Map<string, Connection>();
 
 export const roomsWsController = (connection: SocketStream, reply: FastifyRequest): void => {
   const { id: roomId } = reply.params as { id: string }; // получаем параметр из URL
   let socketId = 0;
   let room = rooms.get(roomId) || null;
 
-  if (!roomsList.has(Number(roomId))) {
+  if (!roomsList.has(roomId)) {
     connection.socket.send(`Room ${roomId} not found`);
     connection.socket.close();
     return;
@@ -30,18 +37,14 @@ export const roomsWsController = (connection: SocketStream, reply: FastifyReques
 
     connections.set(socketId, connection);
     rooms.set(roomId, { connections });
-    room = rooms.get(roomId);
+    room = rooms.get(roomId)!;
   }
 
-  rooms.get(roomId).connections.forEach((ws: SocketStream) => {
-    ws.socket.send(`User was connect ${socketId}`);
-  });
+  broadcast(room?.connections, `User was connect ${socketId}`);
 
   connection.socket.on('close', () => {
-    room.connections.delete(socketId);
-    room.connections.forEach((ws: SocketStream) => {
-      ws.socket.send(`User disconnected ${socketId}`);
-    });
+    room?.connections.delete(socketId);
+    broadcast(room?.connections, `User disconnected ${socketId}`);
   });
 
   connection.socket.on('message', (dto) => {
@@ -49,18 +52,19 @@ export const roomsWsController = (connection: SocketStream, reply: FastifyReques
 
     switch (data.event) {
       case 'update':
-        connection.socket.send(JSON.stringify(roomsList.find((el: Room) => el.id === roomId)));
+        connection.socket.send(JSON.stringify(roomsList.get(roomId)));
         break;
       case 'pause':
-        data.isPlaying = false;
-        broadcast(JSON.stringify(data));
+        roomsList.get(roomId).isPlaying = false;
+        broadcast(room?.connections, roomsList.get(roomId));
         break;
       case 'play':
-        data.isPlaying = true;
-        broadcast(JSON.stringify(data));
+        roomsList.get(roomId).isPlaying = true;
+        broadcast(room?.connections, roomsList.get(roomId));
         break;
       case 'changeProgress':
-        broadcast(JSON.stringify(data));
+        roomsList.get(roomId).progress = data.progress;
+        broadcast(room?.connections, roomsList.get(roomId));
         break;
       default:
         connection.socket.send('Event not match in list');

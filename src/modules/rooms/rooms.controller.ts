@@ -12,7 +12,7 @@ export const createRoomController = (request: FastifyRequest, reply: FastifyRepl
       });
   }
 
-  roomsList.set(data.id, {
+  roomsList.set(data.id.toString(), {
     id: data.id,
     roomName: data.roomName,
     isPlaying: false,
@@ -28,7 +28,7 @@ export const createRoomController = (request: FastifyRequest, reply: FastifyRepl
 
 export const getRoomController = (request: FastifyRequest, reply: FastifyReply) => {
   const { id } = request.params as { id: string };
-  const room = roomsList.get(Number(id));
+  const room = roomsList.get(id);
 
   if (!room) {
     reply.status(422)
