@@ -18,8 +18,8 @@ const broadcast = <T>(cn: ConnectionsList | undefined, message: T): void => {
 
 const rooms = new Map<string, Connection>();
 
-export const roomsWsController = (connection: SocketStream, reply: FastifyRequest): void => {
-  const { id: roomId } = reply.params as { id: string }; // получаем параметр из URL
+export const roomsWsController = (connection: SocketStream, reply: FastifyRequest<{ Params: { id: string } }>): void => {
+  const { id: roomId } = reply.params; // получаем параметр из URL
   let socketId = 0;
   let room = rooms.get(roomId) || null;
 
