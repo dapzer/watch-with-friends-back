@@ -7,4 +7,4 @@ export interface Room {
   event?: string;
 }
 
-export const roomsList = new Map<number, Room>();
+export const roomsList = new Map<string, Room>();

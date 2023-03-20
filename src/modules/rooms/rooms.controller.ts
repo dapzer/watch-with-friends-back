@@ -13,7 +13,7 @@ export const createRoomController = (request: FastifyRequest, reply: FastifyRepl
   }
 
   roomsList.set(data.id.toString(), {
-    id: data.id,
+    id: Number(data.id),
     roomName: data.roomName,
     isPlaying: false,
     src: '',
