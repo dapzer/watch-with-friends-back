@@ -9,7 +9,18 @@ export const createRoomController = (request: FastifyRequest, reply: FastifyRepl
     reply.status(422)
       .send({
         message: `Room with id ${data.id} already exist`,
+        field: 'id',
       });
+    return;
+  }
+
+  if (data.roomName.length < 3) {
+    reply.status(422)
+      .send({
+        message: 'Room name so short',
+        field: 'roomName',
+      });
+    return;
   }
 
   roomsList.set(data.id.toString(), {
